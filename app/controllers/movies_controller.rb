@@ -16,15 +16,17 @@ class MoviesController < ApplicationController
     end
     @all_ratings = Movie.all_ratings
     @selected_ratings = params[:ratings] || session[:ratings] || {}
-
+    
     if params[:sort] != session[:sort]
       session[:sort] = sort
+      flash[:notice] = flash[:notice]
       redirect_to :sort => sort, :ratings => @selected_ratings and return
     end
 
     if params[:ratings] != session[:ratings] and @selected_ratings != {}
       session[:sort] = sort
       session[:ratings] = @selected_ratings
+      flash[:notice] = flash[:notice]
       redirect_to :sort => sort, :ratings => @selected_ratings and return
     end
     @movies = Movie.find_all_by_rating(@selected_ratings.keys, ordering)
@@ -57,5 +59,16 @@ class MoviesController < ApplicationController
     flash[:notice] = "Movie '#{@movie.title}' deleted."
     redirect_to movies_path
   end
-
+  
+  def similar
+    @movie = Movie.find_by_id(params[:id])
+    if @movie.director.blank? then
+      flash[:notice] = "'#{@movie.title}' has no director info."  
+      redirect_to movies_path
+      return
+    else
+      @results = @movie.find_similar
+      render 'similar'
+    end
+  end
 end
